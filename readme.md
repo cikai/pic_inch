@@ -50,4 +50,8 @@
 
 * 剪切图像
 	
-	gm convert a.jpg -crop 200x200+1500+1500 a_crop.jpg
+	`gm convert a.jpg -crop 200x200+1500+1500 a_crop.jpg`
+
+* 设定边框，并且指定颜色
+
+	`gm convert a.jpg  -bordercolor white -border 20x20 a_border.jpg`

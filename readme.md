@@ -36,6 +36,18 @@
 
 ### GraphicMagic
 
-* gm convert a.jpg -density 300x300 +profile "*" b.jpg
+* 调整图像的dpi
 
-* gm convert a.jpg -resample 300x300 b.jpg
+	图像的像素保持不变，增大dpi会减小可打印尺寸
+	`gm convert a.jpg -density 300x300 +profile "*" a_density.jpg`
+
+* 调整图像的dpi
+	
+	图像的打印尺寸保持不变，增大dpi会增加图片的长和宽的像素  
+	增加的像素是根据算法算出的。
+	在电脑屏幕上看的话，会因为图片变大了而导致模糊。
+	`gm convert a.jpg -resample 300x300 a_resample.jpg`
+
+* 剪切图像
+	
+	gm convert a.jpg -crop 200x200+1500+1500 a_crop.jpg

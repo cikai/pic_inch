@@ -58,3 +58,7 @@
 * 设定边框，并且指定颜色
 
 	`gm convert a.jpg  -bordercolor white -border 20x20 a_border.jpg`
+
+* 组合图片
+
+	`gm composite a.jpg -geometry +50+50 bk.jpg a_bk.jpg`

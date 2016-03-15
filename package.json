@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "gm": "^1.21.1",
     "koa": "^1.2.0"
   }
 }

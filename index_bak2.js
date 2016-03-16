@@ -6,15 +6,15 @@ function f1(){
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
 			console.log("1111111");
-			resolve();
+			resolve("hello");
 		}, 1000)
 	})
 }
 
-function f2(){
+function f2(result){
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
-			console.log("2222222");
+			console.log("2222222", result);
 			resolve();
 		}, 1000)
 	})

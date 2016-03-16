@@ -7,21 +7,20 @@ var fs = require("fs");
 var useLog = require("./logger");
 var sizeInfo = require("./size_info");
 
-var imgBasePath = path.join(__dirname, "img_base");
-var imgTmpPath = path.join(__dirname, "img_tmp");
-
-var inch5Path = path.join(imgBasePath, "inch5.jpg");
-
 var ctx = {
 	tmpPath: null,
+	tmpName: null,
 	
 	cropX: 0,
 	cropY: 0,
 	cropW: 300,
 	cropH: 400,
-	cropPath: null,
+	tmpCropPath: null,
 
-	ready1InchPath: null,
+	tmpDensityPath: null,
+	tmp1InchReadyPath: null,
+	tmpDonePath: null,
+
 	bgPath: null
 
 }
@@ -29,69 +28,74 @@ var ctx = {
 // 剪切图片到合适的尺寸
 function crop(ctx){
 	return new Promise((resolve, reject) => {
-		
+		var tmpPath = ctx.tmpPath;
+		var tmpDensityPath = ctx.tmpDensityPath;
+
+		gm(tmpPath)
+		.noProfile()
+		.density(300,300)
+		.write(ctx.tmpDensityPath, (err) => {
+			gm(tmpDensityPath)
+			.crop(ctx.cropX, ctx.cropY, ctx.cropW, ctx.cropH)
+			.write(ctx.tmpCropPath, () => {
+				console.log("-- crop file ", ctx.tmpCropPath);
+				resolve(ctx);
+			})
+		})
 	});
 }
 
 // 转换成1寸的照片适合的尺寸
-function convertImg() {
+function convertImg(ctx) {
 
 	return new Promise(function(resolve, reject){
-		// TODO
-		var sourceImg = path.join(imgTmpPath, "a.jpg");
-		var img1 = path.join(imgTmpPath, "a_1.jpg");
-		var writeStream = fs.createWriteStream(img1);
+		var tmpCropPath = ctx.tmpCropPath;
+		var tmp1InchReadyPath = ctx.tmp1InchReadyPath;
+		var writeStream = fs.createWriteStream(tmp1InchReadyPath);
 
 		writeStream.on("finish", () => {
-			console.log("-- create one file", img1);
-			resolve();
+			console.log("-- create one file", tmp1InchReadyPath);
+			resolve(ctx);
 		})
 
-		gm(sourceImg)
-		.resize(80,80, "!")
+		gm(tmpCropPath)
+		.resize(sizeInfo.inch1.w,sizeInfo.inch1.h, "!")
 		.noProfile()
 		.density(300,300)
 		.borderColor("white")
-		.border(10, 10)
+		.border(sizeInfo.inch1.border, sizeInfo.inch1.border)
 		.stream()
 		.pipe(writeStream) ;
 	})
 }
 
 // 把1寸照片组合到5寸的底板中
-function composite(){
+function composite(ctx){
 	return new Promise((resolve, reject) => {
 
-		var destPath = path.join(imgTmpPath, "a_c.jpg");
-		var img1 = path.join(imgTmpPath, "a_1.jpg");
-
-		var writeStream = fs.createWriteStream(destPath);
-		writeStream.on("finish", () => {
-			
-			resolve();
-		});
-
+		var tmpDonePath = ctx.tmpDonePath;
+		var tmp1InchReadyPath = ctx.tmp1InchReadyPath;
 
 		let gmRun = 
 		gm()
 		.command("convert")
 		.in("-page", "+0+0")
-		.in(inch5Path);
+		.in(ctx.bgPath)
 
 		let x = 0;
 		let y = 0;
 		for(let i =0;i< 2;i++){
-			for(let j= 0;j<6;j++){ 
-				y = i * 100;
-				x = j * 100;
+			for(let j= 0;j<4;j++){ 
+				y = i * sizeInfo.inch1.h;
+				x = j * sizeInfo.inch1.w;
 				gmRun = gmRun
 					.in("-page", `+${x}+${y}`)
-					.in(img1)
+					.in(tmp1InchReadyPath)
 			}
 		}
-		gmRun.mosaic().write(destPath, () => {
-			console.log("-- finish compose", destPath);
-			resolve();
+		gmRun.mosaic().write(tmpDonePath, () => {
+			console.log("-- finish compose", tmpDonePath);
+			resolve(ctx);
 		})
 	});
 	
@@ -101,14 +105,6 @@ function composite(){
 // 准备5寸的底板
 function prepareBaseImage(ctx){
 	return new Promise((resolve, reject) => {
-
-		// tmp directory
-		try {
-			fs.statSync(imgTmpPath);
-		} catch (e) {
-			fs.mkdirSync(imgTmpPath);
-		}
-
 		// one inch background image
 		var inch5Promise = null;
 		try {
@@ -118,7 +114,7 @@ function prepareBaseImage(ctx){
 		}
 
 		Promise.all([inch5Promise]).then(() => {
-			resolve();
+			resolve(ctx);
 		})
 	})
 }
@@ -138,10 +134,13 @@ function createInch5Bg(path) {
 
 function main(ctx){
 	var tasks = [
-		new Promise((resolve, reject) => {
-			resolve(ctx);
-		});
+		function(){
+			return new Promise((resolve, reject) => {
+				resolve(ctx);
+			});	
+		},
 		prepareBaseImage,
+		crop,
 		convertImg,
 		composite
 	];
@@ -158,26 +157,26 @@ function main(ctx){
 			chain = chain.then(fn);
 		}
 	}
-
-	// var fn1 = useLog(prepareBaseImage, true);
-	// var fn2 = useLog(convertImg, true);
-	// var fn3 = useLog(composite, true);
-	// fn1().then(fn2).then(fn3);
 }
 
 
 
+var imgBasePath = path.join(__dirname, "img_base");
 ctx = {
-	tmpPath: null,
+	tmpPath: path.join(imgBasePath, 'tmp.jpg'),
+	tmpName: "tmp",
 	
-	cropX: 0,
-	cropY: 0,
-	cropW: 300,
-	cropH: 400,
-	cropPath: null,
+	cropX: 1000,
+	cropY: 2000,
+	cropW: 1000,
+	cropH: 1500,
+	tmpCropPath: path.join(imgBasePath, 'tmp_crop.jpg'),
 
-	ready1InchPath: null,
-	bgPath: inch5Path
+	tmpDensityPath: path.join(imgBasePath, 'tmp_density.jpg'),
+	tmp1InchReadyPath: path.join(imgBasePath, 'tmp_1inch_ready.jpg'),
+	tmpDonePath: path.join(imgBasePath, 'tmp_done.jpg'),
+
+	bgPath: path.join(imgBasePath, "inch5.jpg")
 
 }
 main(ctx);

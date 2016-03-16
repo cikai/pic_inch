@@ -3,10 +3,11 @@
 module.exports = function(fn, asyncFlg){
 
 	let name = fn.name
-	let args = Array.prototype.slice(arguments);
 
 	if(!asyncFlg){
 		return function(){
+			let args = Array.prototype.slice.call(arguments);
+
 			console.log(`== [${name}] start == `)
 			var result = fn.apply(this, args);
 			console.log(`== [${name}] end == `);
@@ -14,6 +15,8 @@ module.exports = function(fn, asyncFlg){
 		}
 	} else {
 		return function(){
+			let args = Array.prototype.slice.call(arguments);
+
 			return new Promise((resolve, reject) => {
 				console.log(`== [${name}] start == `);
 				fn.apply(this,args).then((result) => {

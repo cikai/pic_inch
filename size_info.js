@@ -19,7 +19,7 @@ var info = {
 		w: 295,
 		h: 413,
 		border: 24
-	}
+	},
 	inch5: {	
 		w: 1370,
 		h: 912

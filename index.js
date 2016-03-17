@@ -7,24 +7,6 @@ var fs = require("fs");
 var useLog = require("./logger");
 var sizeInfo = require("./size_info");
 
-var ctx = {
-	tmpPath: null,
-	tmpName: null,
-	
-	cropX: 0,
-	cropY: 0,
-	cropW: 300,
-	cropH: 400,
-	tmpCropPath: null,
-
-	tmpDensityPath: null,
-	tmpInchReadyPath: null,
-	tmpDonePath: null,
-
-	bgPath: null
-
-}
-
 // 准备文件目录
 // 准备5寸的底板
 function prepareBaseImage(ctx){
@@ -210,24 +192,24 @@ function main(ctx){
 	}
 }
 
-
-
 var imgBasePath = path.join(__dirname, "img_base");
-ctx = {
+var tmpName = path.basename('tmp.jpg');
+var fileBaseName = tmpName.substring(0, tmpName.indexOf("."));
+var ctx = {
 	type: "inch2",
-	tmpPath: path.join(imgBasePath, 'tmp.jpg'),
-	tmpName: "tmp",
 	
+	// 剪切用的坐标
 	cropX: 100,
 	cropY: 300,
 	cropW: 100,
 	cropH: 100,
-	tmpCropPath: path.join(imgBasePath, 'tmp_crop.jpg'),
 
-	tmpDensityPath: path.join(imgBasePath, 'tmp_density.jpg'),
-	tmpInchReadyPath: path.join(imgBasePath, 'tmp_1inch_ready.jpg'),
-	tmpDonePath: path.join(imgBasePath, 'tmp_done.jpg'),
-
+	// 各种路径
+	tmpPath: path.join(imgBasePath, tmpName),
+	tmpCropPath: path.join(imgBasePath, `${fileBaseName}_crop.jpg`),
+	tmpDensityPath: path.join(imgBasePath, `${fileBaseName}_density.jpg`),
+	tmpInchReadyPath: path.join(imgBasePath, `${fileBaseName}_inch_sized.jpg`),
+	tmpDonePath: path.join(imgBasePath, `${fileBaseName}_done.jpg`),
 	bgPath: path.join(imgBasePath, "inch5.jpg")
 
 }

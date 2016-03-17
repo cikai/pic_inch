@@ -48,11 +48,19 @@ function createFile2(){
 }
 
 function judgeFile() {
-	try {
-		fs.statSync("aa");
-	} catch (e) {
-		console.log("not exists");
-	}
+	// try {
+	// 	fs.statSync("aa");
+	// } catch (e) {
+	// 	console.log("not exists");
+	// }
+
+	fs.stat("aa", function(err){
+		if(err){
+			console.log("file not exists");
+		}else {
+
+		}
+	})
 }
 
 function test(){
@@ -104,7 +112,7 @@ function test(){
 
 }
 
-test();
+judgeFile();
 
 
 // fs.mkdir("aa")

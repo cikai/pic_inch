@@ -18,14 +18,51 @@ var ctx = {
 	tmpCropPath: null,
 
 	tmpDensityPath: null,
-	tmp1InchReadyPath: null,
+	tmpInchReadyPath: null,
 	tmpDonePath: null,
 
 	bgPath: null
 
 }
 
-// 剪切图片到合适的尺寸
+// 准备文件目录
+// 准备5寸的底板
+function prepareBaseImage(ctx){
+	return new Promise((resolve, reject) => {
+		// 5 inch background image
+		var promiseArr = [
+			createInch5Bg(ctx.bgPath)
+		]
+		Promise.all(promiseArr).then(() => {
+			resolve(ctx);
+		})
+	})
+}
+
+function createInch5Bg(bgPath) {
+	return new Promise((resolve, reject) => {
+
+		fs.stat(bgPath, (err) => {
+			if(err){
+				// file not exists, create one
+				let w = sizeInfo.inch5.w;
+				let h = sizeInfo.inch5.h;
+				gm(w, h, "white")
+				.density(300,300)
+				.write(bgPath, (err) => { 
+					console.log("** create background file inch 5", bgPath);
+					resolve();
+				});
+			}else {
+				// nothing todo
+				resolve();
+			}
+		})
+	})
+}
+
+
+// 剪切图片被选中的部分
 function crop(ctx){
 	return new Promise((resolve, reject) => {
 		var tmpPath = ctx.tmpPath;
@@ -36,100 +73,114 @@ function crop(ctx){
 		.density(300,300)
 		.write(ctx.tmpDensityPath, (err) => {
 			gm(tmpDensityPath)
-			.crop(ctx.cropX, ctx.cropY, ctx.cropW, ctx.cropH)
+			.crop(ctx.cropW, ctx.cropH, ctx.cropX, ctx.cropY)
 			.write(ctx.tmpCropPath, () => {
-				console.log("-- crop file ", ctx.tmpCropPath);
+				console.log("** crop file ", ctx.tmpCropPath);
 				resolve(ctx);
 			})
 		})
 	});
 }
 
-// 转换成1寸的照片适合的尺寸
+// 转换成1寸/2寸的照片适合的尺寸
+// 2寸的照片放到5寸的底板上，需要-90度旋转
 function convertImg(ctx) {
 
 	return new Promise(function(resolve, reject){
 		var tmpCropPath = ctx.tmpCropPath;
-		var tmp1InchReadyPath = ctx.tmp1InchReadyPath;
-		var writeStream = fs.createWriteStream(tmp1InchReadyPath);
+		var tmpInchReadyPath = ctx.tmpInchReadyPath;
+		var writeStream = fs.createWriteStream(tmpInchReadyPath);
+
+		var w = ctx.type == "inch1" ? sizeInfo.inch1.w : sizeInfo.inch2.w;
+		var h = ctx.type == "inch1" ? sizeInfo.inch1.h : sizeInfo.inch2.h;
 
 		writeStream.on("finish", () => {
-			console.log("-- create one file", tmp1InchReadyPath);
+			console.log("** create one file", tmpInchReadyPath);
 			resolve(ctx);
 		})
 
-		gm(tmpCropPath)
-		.resize(sizeInfo.inch1.w,sizeInfo.inch1.h, "!")
+		var stream = gm(tmpCropPath)
+		.resize(w,h, "!")
 		.noProfile()
 		.density(300,300)
 		.borderColor("white")
 		.border(sizeInfo.inch1.border, sizeInfo.inch1.border)
-		.stream()
-		.pipe(writeStream) ;
+		.stream();
+		
+		if(ctx.type === 'inch2'){
+			stream = gm(stream)
+			.rotate("white", -90)
+			.stream();
+		}
+
+		stream.pipe(writeStream);
 	})
 }
 
-// 把1寸照片组合到5寸的底板中
-function composite(ctx){
+// 把1寸/2寸照片组合到5寸的底板中
+function composite(ctx) {
 	return new Promise((resolve, reject) => {
 
+		var bgPath = ctx.bgPath;
+		var tmpInchReadyPath = ctx.tmpInchReadyPath;
 		var tmpDonePath = ctx.tmpDonePath;
-		var tmp1InchReadyPath = ctx.tmp1InchReadyPath;
 
-		let gmRun = 
-		gm()
-		.command("convert")
-		.in("-page", "+0+0")
-		.in(ctx.bgPath)
+		let coorArr = getCoorArr(ctx.type);
 
-		let x = 0;
-		let y = 0;
-		for(let i =0;i< 2;i++){
-			for(let j= 0;j<4;j++){ 
-				y = i * sizeInfo.inch1.h;
-				x = j * sizeInfo.inch1.w;
-				gmRun = gmRun
-					.in("-page", `+${x}+${y}`)
-					.in(tmp1InchReadyPath)
+		// 拷贝底板文件，作为composite的起始文件
+		fs.writeFileSync(tmpDonePath, fs.readFileSync(bgPath));
+
+		// 递归调用composite
+		// the rescure call is ugly , but ...
+		//
+		// composite这个方法似乎不支持连续调用
+		// 还可以用 gm().command("convert").in(path/to/pic).in("-page", '+xx+xx')
+		// 这个方法可以连续调用，但是dpi就被改变回了72(不知道如何设定为300。。。)
+		// 最后只能采用递归调用composite, 每次写文件。
+		function doComposite(){
+			if(coorArr.length === 0){
+				resolve(ctx);
+				console.log("** composite done ...", tmpDonePath);
+			}else {
+				let xy = coorArr.shift();
+				gm(tmpDonePath)
+				.composite(tmpInchReadyPath)
+				.geometry(`+${xy[0]}+${xy[1]}`)
+				.write(tmpDonePath, () => {
+					doComposite();
+				});
 			}
 		}
-		gmRun.mosaic().write(tmpDonePath, () => {
-			console.log("-- finish compose", tmpDonePath);
-			resolve(ctx);
-		})
+
+		doComposite();
+
 	});
-	
 }
 
-// 准备临时目录
-// 准备5寸的底板
-function prepareBaseImage(ctx){
-	return new Promise((resolve, reject) => {
-		// one inch background image
-		var inch5Promise = null;
-		try {
-			fs.statSync(ctx.bgPath);
-		} catch (e) {
-			inch5Promise = createInch5Bg(ctx.bgPath);
+function getCoorArr(type){
+	var coorArr = [];
+	if(type === "inch1"){
+		let x = 0;
+		let y = 0;
+		for(let i = 0; i< 2; i++){
+			for(let j= 0; j< 4; j++){ 
+				y = i * sizeInfo.inch1.hBorder;
+				x = j * sizeInfo.inch1.wBorder;
+				coorArr.push([x, y]);
+			}
 		}
-
-		Promise.all([inch5Promise]).then(() => {
-			resolve(ctx);
-		})
-	})
-}
-
-function createInch5Bg(path) {
-	return new Promise((resolve, reject) => {
-		let w = sizeInfo.inch5.w;
-		let h = sizeInfo.inch5.h;
-		gm(w, h, "white")
-		.density(300,300)
-		.write(path, (err) => { 
-			console.log("-- create background file inch 5 --");
-			resolve();
-		});
-	})
+	}else {
+		let x = 0;
+		let y = 0;
+		for(let i = 0; i< 2; i++){
+			for(let j= 0; j< 2; j++){
+				y = i * sizeInfo.inch2.wBorder;
+				x = j * sizeInfo.inch2.hBorder;
+				coorArr.push([x, y]);
+			}
+		}
+	}
+	return coorArr;
 }
 
 function main(ctx){
@@ -163,17 +214,18 @@ function main(ctx){
 
 var imgBasePath = path.join(__dirname, "img_base");
 ctx = {
+	type: "inch2",
 	tmpPath: path.join(imgBasePath, 'tmp.jpg'),
 	tmpName: "tmp",
 	
-	cropX: 1000,
-	cropY: 2000,
-	cropW: 1000,
-	cropH: 1500,
+	cropX: 100,
+	cropY: 300,
+	cropW: 100,
+	cropH: 100,
 	tmpCropPath: path.join(imgBasePath, 'tmp_crop.jpg'),
 
 	tmpDensityPath: path.join(imgBasePath, 'tmp_density.jpg'),
-	tmp1InchReadyPath: path.join(imgBasePath, 'tmp_1inch_ready.jpg'),
+	tmpInchReadyPath: path.join(imgBasePath, 'tmp_1inch_ready.jpg'),
 	tmpDonePath: path.join(imgBasePath, 'tmp_done.jpg'),
 
 	bgPath: path.join(imgBasePath, "inch5.jpg")

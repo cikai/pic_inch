@@ -1,0 +1,47 @@
+div {
+	border: 1px solid black;
+}
+
+.preview_all {
+	width: 100%;
+	max-height: 300px;
+}
+
+.preview_all img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+.preview_all .selector {
+	position: absolute;
+	top:0px;
+	left:0px
+}
+
+/*resize handler*/
+.ui-resizable:hover,
+.ui-resizable-resizing {
+	border: 2px solid black;
+}
+.ui-resizable-handle {
+	display: block;
+	z-index:90;
+	width: 10px;
+	height: 10px;
+	position:absolute;
+	right: 0px;
+	bottom: 0px;
+	border: 0px;
+	background-color: black;
+	border: 1px solid black;
+}
+
+/* file uploader */
+.fileUploaderContainer .debugArea {
+  position: fixed;
+  top: 0px;
+  right: 0px;
+  max-width:600px;
+  border: none;
+  background-color: antiquewhite;
+}

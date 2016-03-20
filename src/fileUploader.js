@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * jsp:
  * <input type="file" name="uploadFile" id="uploadFile"/>
@@ -313,13 +315,13 @@ FileUploader.prototype = {
                 } else if (type === "video") {
                     previewVideo(previewId, srcUrl, fileType);
                 }
+                
+                var fnDoneCallback = options.doneCallback;
+                if (fnDoneCallback) {
+                    fnDoneCallback.call(baseDom, result);
+                }
             };
             reader.readAsDataURL(baseDom.get(0).files[0]);
-        }
-
-        var fnDoneCallback = options.doneCallback;
-        if (fnDoneCallback) {
-            fnDoneCallback.call(baseDom, result);
         }
     },
 
@@ -550,16 +552,23 @@ function getImageWidthHeight(containerDom) {
 
 function main(options) {
     var _arguments = arguments;
+
+    // get methods
+    if (typeof options === 'string' && options.startsWith("get")) {
+        var fileUploaderObj = this.data("fileUploader");
+        if(!fileUploaderObj){
+            return;
+        }
+        var args = Array.prototype.slice.call(_arguments);
+        var methodName = options;
+        var result = fileUploaderObj.API[methodName].apply(fileUploaderObj, args);
+        return result;
+    }
+
+    // component init and set methods
     return this.each(function(_, dom) {
         var $dom = $(dom);
         var fileUploaderObj = $dom.data("fileUploader");
-
-        if (typeof options === 'string') {
-            var args = Array.prototype.slice.call(_arguments);
-            var methodName = args.shift();
-            var whInfo = fileUploaderObj.API[methodName].apply(fileUploaderObj, args);
-            return whInfo;
-        }
 
         if (fileUploaderObj) {
             return;

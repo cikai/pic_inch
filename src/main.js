@@ -27,35 +27,34 @@ new Vue({
 		<div>
 			<div class="upload">
 				<input type="file" id="fileUploader"/>
+				<input type="hidden" id="tmpFileName" name="tmpFileName" />
 			</div>
-			<div :style="{width: previewAllWidth + 'px', height: previewAllHeight + 'px'}" class='preview_all'>
-				{{selector.w}},{{selector.h}},{{selector.t}},{{selector.l}}
-
+			<div id="imgPreview" class="offScreen" style="width: 500px;height:400px;">
+			</div>
+			<div :style="previewAllStyle" class='preview_all' v-show="tmpFileName">
+				<img :style="previewAllStyle" :src="src" alt="" />
 				<div :style="calcWhStyle(selectorWidth)" class='selector' id="moveable">
 				</div>
 			</div>
-			<div class='preview_part'>
-				<div :style="calcWhStyle(partPreviewWidth)">
-					<img src="https://www.baidu.com/img/bd_logo1.png" style='' alt=""/>
-				</div>
+			<div class='preview_part' :style="previewPartStyle" v-show="tmpFileName">
+				<img :style="previewPartImgStyle" :src="src" alt="" />
 			</div>
 			<div class='preview_done'></div>
 		</div>
 	`,
 	data: {
 		type: "inch1", 
-		fileData: null, // 上传文件数据
+		src: "",
+		tmpFileName: "TODO",
 
 		originPic: { // 原始图片宽高
-			w: 0,
-			h: 0
+			w: 1,
+			h: 1
 		},
 
-		previewAllWidth: 500,
-		previewAllHeight: 500,
-		previewPic: { // 预览图片宽高
-			w: 0,
-			h: 0,
+		previewAllPic: { // 预览图片宽高
+			w: 1,
+			h: 1
 		},
 
 		selectorWidth: 50, // 图片选择框的宽度
@@ -66,18 +65,41 @@ new Vue({
 			t: 0
 		},
 
-		partPreviewWidth: 250, // 选择框中图片的preview宽度
-		partPreviewPic: { // 部分preview图片的信息
-			w: 0,
-			h: 0,
-			marginLeft: 0,
-			marginTop: 0
+		previewPartWidth: 250,
+		previewPartPic: { // 部分preview图片的信息
+			w: 1,
+			h: 1,
+			marginLeft: -1000,
+			marginTop: -500
 		}
 
 	},
 	ready: function(){
 		this.initDrapAndResize();
 		this.initFileUploader();
+	},
+
+	computed: {
+		previewAllStyle: function(){
+			return {
+				width: this.previewAllPic.w + 'px',
+				height: this.previewAllPic.h + 'px'
+			}
+		},
+
+		previewPartStyle: function(){
+			var whInfo = this.calcWhStyle(this.previewPartWidth);
+			console.log(whInfo);
+			return  whInfo;
+		},
+		previewPartImgStyle: function(){
+			return {
+				width: this.previewPartPic.w + 'px',
+				height: this.previewPartPic.h + 'px',
+				"margin-left":  this.previewPartPic.marginLeft + 'px',
+				"margin-top":  this.previewPartPic.marginTop + 'px'
+			}
+		}
 	},
 
 	methods: {
@@ -107,8 +129,9 @@ new Vue({
 				 debug: true,
 				 clientCheck: true,
 				 type: "image", 
-				 allowType: ["jpg", "png", "gif"],
+				 allowType: ["jpg", "jpeg","png", "gif"],
 				 maxSize: 1024 * 1024 * 20, // 20M
+				 previewId: "imgPreview",
 				 frontCheckNgCallback: ((code) => {
 				 	if(code == "size"){
 				 		alert("不能超过20M");
@@ -119,7 +142,16 @@ new Vue({
 				 }),
 				 doneCallback: (() => {
 				 	let wh = $("#fileUploader").fileUploader("getImgSizeInfo");
-				 	console.log(wh);
+				 	this.originPic.w = wh.w;
+				 	this.originPic.h = wh.h;
+
+				 	let previewImg = $("#imgPreview img").eq(0);
+				 	this.previewAllPic.w = previewImg.width();
+				 	this.previewAllPic.h = previewImg.height();
+				 	this.src = previewImg.attr("src");
+
+			 		this.calcPartPreviewPic();
+
 				 })
 			});
 		},
@@ -130,7 +162,25 @@ new Vue({
 			this.selector.h = $el.height();
 			this.selector.l = $position.left;
 			this.selector.t = $position.top;
+
+			this.calcPartPreviewPic();
+
+			var zoomInRate = this.previewPartWidth / this.selector.w;
+			let ml = this.selector.l;
+			let mt = this.selector.t;
+			this.previewPartPic.marginLeft = ml * zoomInRate * -1;
+			this.previewPartPic.marginTop = mt * zoomInRate * -1;
+
 		},
+
+		calcPartPreviewPic: function(){
+			var zoomInRate = this.previewPartWidth / this.selector.w;
+			var partW = parseInt(this.previewAllPic.w * zoomInRate, 10);
+			var partH = parseInt(this.previewAllPic.h * zoomInRate, 10);
+			this.previewPartPic.w = partW;
+			this.previewPartPic.h = partH;
+		},
+
 		calcWhStyle: function(baseWidth){
 			let w = baseWidth;
 			let h = 0;
@@ -146,9 +196,7 @@ new Vue({
 			}
 		}
 	},
-	computed: {
 
-	}
 })
 
 

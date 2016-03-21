@@ -1,7 +1,3 @@
-div {
-	border: 1px solid black;
-}
-
 .preview_all {
 	position: relative;
 }
@@ -19,13 +15,50 @@ div {
 	overflow:hidden;
 }
 
+.bg-info {
+	padding: 15px;
+	border-radius: 5px;
+}
+
+.inchRadio {
+	font-weight: normal;
+}
+
+@media screen and (min-width: 800px) {
+	#imgPreview {
+		max-width: 500px;
+		max-height: 400px;
+	}
+}
+
+@media screen and (max-width: 420px) {
+	#imgPreview {
+		max-width: 380px;
+		max-height: 300px;
+	}
+}
+
+@media screen and (max-width: 380px) {
+	#imgPreview {
+		max-width: 340px;
+		max-height: 300px;
+	}
+}
+
+@media screen and (max-width: 320px) {
+	#imgPreview {
+		max-width: 290px;
+		max-height: 250px;
+	}
+}
+
 /*resize handler*/
 .ui-resizable {
-	border: 1px solid yellow;
+	border: 1px solid @brand-primary;
 }
 .ui-resizable:hover,
 .ui-resizable-resizing {
-	border: 2px solid yellow;
+	border: 2px solid @brand-primary;
 }
 .ui-resizable-handle {
 	display: block;
@@ -36,8 +69,8 @@ div {
 	right: 0px;
 	bottom: 0px;
 	border: 0px;
-	background-color: yellow;
-	border: 1px solid yellow;
+	background-color: @brand-primary;
+	border: 1px solid @brand-primary;
 }
 
 /* file uploader */

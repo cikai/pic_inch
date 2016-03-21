@@ -24,28 +24,57 @@ Vue.config.debug = true; // debug模式
 new Vue({
 	el: "#main",
 	template: `
-		<div>
-			<div class="upload">
-				<input type="file" id="fileUploader"/>
-				<input type="hidden" id="tmpFileName" name="tmpFileName" />
-			</div>
-			<div id="imgPreview" class="offScreen" style="width: 500px;height:400px;">
-			</div>
-			<div :style="previewAllStyle" class='preview_all' v-show="tmpFileName">
-				<img :style="previewAllStyle" :src="src" alt="" />
-				<div :style="calcWhStyle(selectorWidth)" class='selector' id="moveable">
+		<div style='margin-left:10px; margin-top:10px;'>
+			<form action="javascript:void(0)" class="form-group">
+				<div class="form-group">
+					<label for="fileUploader">照片选择</label>
+					<div class="upload">
+						<input type="file" id="fileUploader"/>
+						<div id="imgPreview" class="offScreen"></div>
+						<input type="hidden" id="tmpFileName" name="tmpFileName" />
+						<p class='help-block'>支持jpg，gif，png格式的图片</p>
+					</div>
 				</div>
-			</div>
-			<div class='preview_part' :style="previewPartStyle" v-show="tmpFileName">
-				<img :style="previewPartImgStyle" :src="src" alt="" />
-			</div>
-			<div class='preview_done'></div>
+				<div class="type_sel form-group">
+					<label for="inlineRadio1">尺寸选择</label>
+					<div>
+						<label class="radio-inline">
+						  <input type="radio" id="inlineRadio1" value="inch1" v-model="type">
+						  <label for="inlineRadio1" class="inchRadio">1寸照片</label>
+						</label>
+						<label class="radio-inline">
+						  <input type="radio" name="inlineRadioOptions" id="inlineRadio2" value="inch2" v-model="type">
+						  <label for="inlineRadio2" class="inchRadio">2寸照片</label>
+						</label>
+					</div>
+				</div>
+				<div class="form-group vertical-align-m" v-show="tmpFileName != ''">
+					<div class='inline-block vertical-align-m' style='margin-right:20px;margin-bottom: 20px'>
+						<label for="">图片裁剪</label>
+						<div :style="previewAllStyle" class='preview_all'>
+							<img :style="previewAllStyle" :src="src" alt="" />
+							<div :style="calcWhStyle(selector.w)" class='selector' id="moveable">
+							</div>
+						</div>
+					</div>
+					<div class='inline-block vertical-align-m'>
+						<label for="">输出预览</label>
+						<div :style="previewPartDivStyle" class='preview_part'>
+							<img :style="previewPartImgStyle" :src="src" alt="" />
+						</div>
+					</div>
+				</div>
+				<div class="form-group">
+					<button type="button" class='btn btn-primary'>生成相片（可打印/冲印）</button>
+				</div>
+			</form>
+			<p class="bg-info">做成的照片请使用标准5寸相纸打印/冲印</p>
 		</div>
 	`,
 	data: {
 		type: "inch1", 
 		src: "",
-		tmpFileName: "TODO",
+		tmpFileName: "",
 
 		originPic: { // 原始图片宽高
 			w: 1,
@@ -75,7 +104,7 @@ new Vue({
 
 	},
 	ready: function(){
-		this.initDrapAndResize();
+		this.initDragAndResize();
 		this.initFileUploader();
 	},
 
@@ -87,9 +116,8 @@ new Vue({
 			}
 		},
 
-		previewPartStyle: function(){
+		previewPartDivStyle: function(){
 			var whInfo = this.calcWhStyle(this.previewPartWidth);
-			console.log(whInfo);
 			return  whInfo;
 		},
 		previewPartImgStyle: function(){
@@ -103,12 +131,12 @@ new Vue({
 	},
 
 	methods: {
-		initDrapAndResize: function(){
+		initDragAndResize: function(){
 			$("#moveable").draggable({
 				containment: "parent",
 				drag: ((event, ui ) => {
 					let $el = $(ui.helper);
-					this.syncPosition($el);
+					this.syncSelector($el);
 				})
 			}).resizable({
 				aspectRatio: true,
@@ -119,7 +147,7 @@ new Vue({
 				minHeight: 15,
 				resize: ((event, ui) => {
 					let $el = $(ui.element);
-					this.syncPosition($el);
+					this.syncSelector($el);
 				})
 			});
 		},
@@ -140,30 +168,34 @@ new Vue({
 				 		alert("支持格式jpg,png,gif");
 				 	}
 				 }),
-				 doneCallback: (() => {
+				 doneCallback: ((tmpFileName) => {
+
 				 	let wh = $("#fileUploader").fileUploader("getImgSizeInfo");
 				 	this.originPic.w = wh.w;
 				 	this.originPic.h = wh.h;
 
+				 	// file uploader组件提供的preview功能中，图片是按照宽高比例缩放的，
+				 	// 所以这里直接取得图片的宽高作为全图预览的宽高
 				 	let previewImg = $("#imgPreview img").eq(0);
-				 	this.previewAllPic.w = previewImg.width();
-				 	this.previewAllPic.h = previewImg.height();
+				 	this.previewAllPic.w = getWidth(previewImg);
+				 	this.previewAllPic.h = getHeight(previewImg);
 				 	this.src = previewImg.attr("src");
 
-			 		this.calcPartPreviewPic();
+			 		this.calcPartPreviewPicWh();
 
+			 		this.tmpFileName = tmpFileName;
 				 })
 			});
 		},
 
-		syncPosition: function($el){
+		syncSelector: function($el){
 			let $position = $el.position();
-			this.selector.w = $el.width();
-			this.selector.h = $el.height();
+			this.selector.w = getWidth($el)
+			this.selector.h = getHeight($el);
 			this.selector.l = $position.left;
 			this.selector.t = $position.top;
 
-			this.calcPartPreviewPic();
+			this.calcPartPreviewPicWh();
 
 			var zoomInRate = this.previewPartWidth / this.selector.w;
 			let ml = this.selector.l;
@@ -173,7 +205,7 @@ new Vue({
 
 		},
 
-		calcPartPreviewPic: function(){
+		calcPartPreviewPicWh: function() {
 			var zoomInRate = this.previewPartWidth / this.selector.w;
 			var partW = parseInt(this.previewAllPic.w * zoomInRate, 10);
 			var partH = parseInt(this.previewAllPic.h * zoomInRate, 10);
@@ -189,15 +221,24 @@ new Vue({
 			}else {
 				h = parseInt(w / sizeInfo.inch2.w * sizeInfo.inch2.h, 10); 
 			}
-				
-			return {
+			
+			var returnInfo = {
 				width: w + 'px',
 				height: h + 'px'
-			}
+			};				
+
+			console.log(returnInfo);
+			return returnInfo;
 		}
 	},
 
-})
+});
 
 
+function getWidth($el){
+	return parseInt($el.css('width'), 10);
+}
 
+function getHeight($el){
+	return parseInt($el.css('height'), 10);
+}

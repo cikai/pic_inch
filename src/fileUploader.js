@@ -220,8 +220,8 @@ FileUploader.prototype = {
             this.completeCallback.bind(this),
             this.bkCheckNgCallback.bind(this)
         ];
-        // common.sendAjax.apply(null, paramArr);
-        this.doneCallback.call(this);
+        common.sendAjax.apply(null, paramArr);
+        // this.doneCallback.call(this);
     },
 
     check: function() {

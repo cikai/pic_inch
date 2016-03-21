@@ -8,6 +8,7 @@ require("./css/all.less");
 // 加载js
 require("expose?$!expose?jQuery!jquery");
 require("jquery-ui");
+require("./ui-touch.js");
 require('bootstrap');
 
 // components
@@ -24,12 +25,12 @@ Vue.config.debug = true; // debug模式
 new Vue({
 	el: "#main",
 	template: `
-		<div style='margin-left:10px; margin-top:10px;'>
+		<div>
 			<form action="javascript:void(0)" class="form-group">
 				<div class="form-group">
 					<label for="fileUploader">照片选择</label>
 					<div class="upload">
-						<input type="file" id="fileUploader"/>
+						<input type="file" id="fileUploader" name="selectFile"/>
 						<div id="imgPreview" class="offScreen"></div>
 						<input type="hidden" id="tmpFileName" name="tmpFileName" />
 						<p class='help-block'>支持jpg，gif，png格式的图片</p>
@@ -65,7 +66,7 @@ new Vue({
 					</div>
 				</div>
 				<div class="form-group">
-					<button type="button" class='btn btn-primary'>生成相片（可打印/冲印）</button>
+					<button type="button" class='btn btn-primary' @click.prevent='createClickHandler'>生成相片（可打印/冲印）</button>
 				</div>
 			</form>
 			<p class="bg-info">做成的照片请使用标准5寸相纸打印/冲印</p>
@@ -88,8 +89,8 @@ new Vue({
 
 		selectorWidth: 50, // 图片选择框的宽度
 		selector: { // 选择框的位置和宽高信息
-			w: 50,
-			h: 70,
+			w: 100,
+			h: 140,
 			l: 0,
 			t: 0
 		},
@@ -140,7 +141,7 @@ new Vue({
 				})
 			}).resizable({
 				aspectRatio: true,
-				autoHide: true,
+				autoHide: false,
 				containment: "parent",
 				handles: "s,e,se",
 				minWidth: 15,
@@ -154,37 +155,52 @@ new Vue({
 
 		initFileUploader: function(){
 			$("#fileUploader").fileUploader({
-				 debug: true,
-				 clientCheck: true,
-				 type: "image", 
-				 allowType: ["jpg", "jpeg","png", "gif"],
-				 maxSize: 1024 * 1024 * 20, // 20M
-				 previewId: "imgPreview",
-				 frontCheckNgCallback: ((code) => {
-				 	if(code == "size"){
-				 		alert("不能超过20M");
-				 	}
-				 	if(code == "type"){
-				 		alert("支持格式jpg,png,gif");
-				 	}
-				 }),
-				 doneCallback: ((tmpFileName) => {
+				url: "/upload",
+				debug: true,
+				clientCheck: true,
+				type: "image", 
+				allowType: ["jpg", "jpeg","png", "gif"],
+				maxSize: 1024 * 1024 * 20, // 20M
+				previewId: "imgPreview",
+				frontCheckNgCallback: ((code) => {
+					if(code == "size"){
+						alert("不能超过20M");
+					}
+					if(code == "type"){
+						alert("支持格式jpg,png,gif");
+					}
+				}),
+				doneCallback: ((tmpFileName) => {
 
-				 	let wh = $("#fileUploader").fileUploader("getImgSizeInfo");
-				 	this.originPic.w = wh.w;
-				 	this.originPic.h = wh.h;
+					let wh = $("#fileUploader").fileUploader("getImgSizeInfo");
+					this.originPic.w = wh.w;
+					this.originPic.h = wh.h;
 
-				 	// file uploader组件提供的preview功能中，图片是按照宽高比例缩放的，
-				 	// 所以这里直接取得图片的宽高作为全图预览的宽高
-				 	let previewImg = $("#imgPreview img").eq(0);
-				 	this.previewAllPic.w = getWidth(previewImg);
-				 	this.previewAllPic.h = getHeight(previewImg);
-				 	this.src = previewImg.attr("src");
+					// file uploader组件提供的preview功能中，图片是按照宽高比例缩放的，
+					// 所以这里直接取得图片的宽高作为全图预览的宽高
+					let previewImg = $("#imgPreview img").eq(0);
+					this.previewAllPic.w = getWidth(previewImg);
+					this.previewAllPic.h = getHeight(previewImg);
+					this.src = previewImg.attr("src");
 
-			 		this.calcPartPreviewPicWh();
+					this.calcPartPreviewPicWh();
 
-			 		this.tmpFileName = tmpFileName;
-				 })
+					this.tmpFileName = tmpFileName;
+				})
+			});
+		},
+
+		createClickHandler: function(){
+			common.sendAjax({
+				url: '/create',
+				method: 'POST',
+				data: {
+					tmpFileName: this.tmpFileName,
+					type: this.type,
+					// selector: this.selector
+				}
+			}, () => {
+				console.log("done ...");
 			});
 		},
 

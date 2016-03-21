@@ -5,7 +5,7 @@ module.exports = {
   entry: "./src/main.js",
   output: {
     path: "./build",
-    publicPath: "http://localhost:9090/build",
+    publicPath: "http://192.168.196.184:9090/build",
     filename: "build.js"
   },
   resolve: {

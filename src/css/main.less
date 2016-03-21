@@ -63,14 +63,20 @@
 .ui-resizable-handle {
 	display: block;
 	z-index:90;
-	width: 10px;
-	height: 10px;
+	width: 55px;
+	height: 20px;
 	position:absolute;
 	right: 0px;
 	bottom: 0px;
 	border: 0px;
 	background-color: @brand-primary;
 	border: 1px solid @brand-primary;
+}
+.ui-resizable-handle:after {
+	color: white;
+	font-size: 12px;
+	font-weight: bold;
+	content: "改变大小";
 }
 
 /* file uploader */

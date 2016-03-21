@@ -23,6 +23,8 @@
     "jquery": "^2.2.2",
     "jquery-ui": "^1.10.5",
     "koa": "^1.2.0",
+    "koa-better-body": "^1.0.17",
+    "koa-static": "^2.0.0",
     "less": "^2.6.1",
     "less-loader": "^2.2.2",
     "style-loader": "^0.13.0",

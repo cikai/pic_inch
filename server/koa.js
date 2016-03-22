@@ -29,7 +29,7 @@ app.use(bodyParse({
 	}
 }));
 
-app.use(function *(next){
+app.use(function* (next){
 	if(this.path === '/upload'){
 		var tmpFilePath = this.request.body.files.selectFile.path;
 		var tmpFileName = path.basename(tmpFilePath);

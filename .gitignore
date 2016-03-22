@@ -2,3 +2,4 @@ node_modules
 img_tmp
 img_base
 build
+server/img_base

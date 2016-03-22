@@ -1,11 +1,13 @@
 var app = require("koa")();
 var koaStatic = require("koa-static");
-var bodyParse = require('koa-better-body');
-
-
+var parse = require("co-body");
+var mparse = require("co-busboy");
+var fs = require("fs");
 var path = require("path");
 
-var fileUploadPath = path.join(__dirname, "../img_base");
+var service = require("./pic_service");
+
+var fileUploadPath = path.join(__dirname, "img_base");
 
 // log
 app.use(function* (next){
@@ -22,46 +24,79 @@ var staticSubPath = process.env.NODE_ENV == 'product' ? '../build/' : '../'
 var staticPath = path.join(__dirname, staticSubPath);
 app.use(koaStatic(staticPath));
 
-app.use(bodyParse({
-	multipart: true,
-	formidable: {
-		uploadDir: fileUploadPath
-	}
-}));
-
+// 文件上传
 app.use(function* (next){
-	if(this.path === '/upload'){
-		var tmpFilePath = this.request.body.files.selectFile.path;
-		var tmpFileName = path.basename(tmpFilePath);
-		console.log(`tmp file path [${tmpFilePath}], name [${tmpFileName}]`);
+	if(this.path !== '/upload'){
+		return yield next;
+	}
+
+	// multipart upload
+	var parts = mparse(this);
+	var part;
+
+	while (part = yield parts) {
+		var ext = path.extname(part.filename);
+		var tmpFileName = getRandomName() + ext;
+		var tmpFilePath = path.join(fileUploadPath, tmpFileName);
+
+		var stream = fs.createWriteStream(tmpFilePath);
+		part.pipe(stream);
+		console.log('uploading %s -> %s', part.filename, stream.path);
+
 		this.body = {
 			code: 'ok',
 			result: tmpFileName
-		};
-	}else {
-		this.body = "";
+		}
 	}
+	yield next;
 
-	// yield next;
 });
 
+// 文件做成
 app.use(function *(next){
-	if(this.path === '/create'){
-		console.log("11111111111");
-		var picInfo = yield bodyParse(this);
-		console.log(picInfo || "null !");
-		// var tmpFileName = this.params.tmpFileName;
-		// var tmpFilePath = path.join(fileUploadPath, path.basename(tmpFileName));
-		// console.log(`tmp file path [${tmpFilePath}]`);
-		// this.body = {
-		// 	code: 'ok',
-		// 	result: tmpFileName
-		// };
-	}else {
-		this.body = "";
+	if(this.path !== '/create'){
+		return yield next;
+	}
+
+	var picInfo = yield parse(this);
+	console.log(picInfo);
+
+	picInfo.tmpFileName = path.basename(picInfo.tmpFileName);
+	var doneFilePath = yield createFile(picInfo);
+	this.body = {
+		code: "ok",
+		result: doneFilePath
 	}
 	yield next;
 });
+
+function createFile(picInfo){
+	return function(done){
+		service(picInfo, done);
+	}
+}
+
+// 文件下载
+app.use(function* (next) {
+	if(this.path !== '/download'){
+		return yield next;
+	}
+	
+	var fileName = this.query.filename;
+	var downloadFileName = path.join(fileUploadPath, path.basename(fileName));
+	var fstat = fs.statSync(downloadFileName);
+	if(fstat.isFile()){
+		this.set("Content-Disposition", `attachment; filename=${fileName}`);
+		this.type = path.extname(fileName);
+		this.body = fs.createReadStream(downloadFileName);
+	}
+});
+
+function getRandomName(){
+	var t = new Date().getTime();
+	var r = parseInt(Math.random() * 1000, 10);
+	return t + "_" + r;
+}
 
 var port = 3000;
 app.listen(port);

@@ -165,7 +165,7 @@ function getCoorArr(type){
 	return coorArr;
 }
 
-function main(ctx){
+function main(ctx, callback){
 	var tasks = [
 		function(){
 			return new Promise((resolve, reject) => {
@@ -175,7 +175,13 @@ function main(ctx){
 		prepareBaseImage,
 		crop,
 		convertImg,
-		composite
+		composite,
+		function(ctx){
+			return new Promise((resolve, reject) => {
+				resolve(ctx);
+				callback(null, path.basename(ctx.tmpDonePath));
+			});	
+		},
 	];
 
 	tasks = tasks.map((fn) => {
@@ -192,25 +198,29 @@ function main(ctx){
 	}
 }
 
-var imgBasePath = path.join(__dirname, "img_base");
-var tmpName = path.basename('tmp.jpg');
-var fileBaseName = tmpName.substring(0, tmpName.indexOf("."));
-var ctx = {
-	type: "inch2",
-	
-	// 剪切用的坐标
-	cropX: 100,
-	cropY: 300,
-	cropW: 100,
-	cropH: 100,
 
-	// 各种路径
-	tmpPath: path.join(imgBasePath, tmpName),
-	tmpCropPath: path.join(imgBasePath, `${fileBaseName}_crop.jpg`),
-	tmpDensityPath: path.join(imgBasePath, `${fileBaseName}_density.jpg`),
-	tmpInchReadyPath: path.join(imgBasePath, `${fileBaseName}_inch_sized.jpg`),
-	tmpDonePath: path.join(imgBasePath, `${fileBaseName}_done.jpg`),
-	bgPath: path.join(imgBasePath, "inch5.jpg")
 
+module.exports = function(picInfo, callback){
+	var imgBasePath = path.join(__dirname, "img_base");
+	var tmpFileName = picInfo.tmpFileName;
+	var fileBaseName = tmpFileName.substring(0, tmpFileName.indexOf("."));
+	var ctx = {
+		type: picInfo.type,
+		
+		// 剪切用的坐标
+		cropX: picInfo.selector.l,
+		cropY: picInfo.selector.t,
+		cropW: picInfo.selector.w,
+		cropH: picInfo.selector.h,
+
+		// 各种路径
+		tmpPath: path.join(imgBasePath, tmpFileName),
+		tmpCropPath: path.join(imgBasePath, `${fileBaseName}_crop.jpg`),
+		tmpDensityPath: path.join(imgBasePath, `${fileBaseName}_density.jpg`),
+		tmpInchReadyPath: path.join(imgBasePath, `${fileBaseName}_inch_sized.jpg`),
+		tmpDonePath: path.join(imgBasePath, `${fileBaseName}_done.jpg`),
+		bgPath: path.join(imgBasePath, "inch5.jpg")
+
+	}
+	main(ctx, callback);
 }
-main(ctx);

@@ -197,10 +197,11 @@ new Vue({
 				data: {
 					tmpFileName: this.tmpFileName,
 					type: this.type,
-					// selector: this.selector
+					selector: this.selector
 				}
-			}, () => {
-				console.log("done ...");
+			}, (doneFileName) => {
+				console.log("created file [%s]", doneFileName);
+				window.location.href='/download?filename=' + doneFileName;
 			});
 		},
 

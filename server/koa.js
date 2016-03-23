@@ -5,7 +5,7 @@ var mparse = require("co-busboy");
 var fs = require("fs");
 var path = require("path");
 
-var service = require("./pic_service");
+var createFile = require("./pic_service");
 
 var fileUploadPath = path.join(__dirname, "img_base");
 
@@ -69,12 +69,6 @@ app.use(function *(next){
 	}
 	yield next;
 });
-
-function createFile(picInfo){
-	return function(done){
-		service(picInfo, done);
-	}
-}
 
 // 文件下载
 app.use(function* (next) {

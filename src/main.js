@@ -11,11 +11,15 @@ require("jquery-ui");
 require("./ui-touch.js");
 require('bootstrap');
 
+// template
+var templateHtml = require("./template.html");
+$(templateHtml).appendTo($(document.body));
 // components
 require("./fileUploader")();
 
 var common = require("./common");
 common.jsExtension();
+
 
 import Vue from 'vue';
 import sizeInfo from '../server/size_info.js';
@@ -29,11 +33,16 @@ new Vue({
 			<form action="javascript:void(0)" class="form-group">
 				<div class="form-group">
 					<label for="fileUploader">照片选择</label>
+					<span class='help'>支持jpg, gif, png格式的图片</span>
 					<div class="upload">
 						<input type="file" id="fileUploader" name="selectFile"/>
 						<div id="imgPreview" class="offScreen"></div>
 						<input type="hidden" id="tmpFileName" name="tmpFileName" />
-						<p class='help-block'>支持jpg，gif，png格式的图片</p>
+					</div>
+					<div class="progress">
+					  <div class="progress-bar" role="progressbar" aria-valuenow="{{progress}}" aria-valuemin="0" aria-valuemax="100" :style="{width: progress + '%'}">
+					    {{progress}}%
+					  </div>
 					</div>
 				</div>
 				<div class="type_sel form-group">
@@ -66,7 +75,12 @@ new Vue({
 					</div>
 				</div>
 				<div class="form-group">
-					<button type="button" class='btn btn-primary' @click.prevent='createClickHandler'>生成相片（可打印/冲印）</button>
+					<button type="button" 
+						class='btn btn-primary' 
+						@click.prevent='createClickHandler'
+						:disabled="tmpFileName == ''">
+						生成相片（可打印/冲印）
+					</button>
 				</div>
 			</form>
 			<p class="bg-info">做成的照片请使用标准5寸相纸打印/冲印</p>
@@ -76,6 +90,7 @@ new Vue({
 		type: "inch1", 
 		src: "",
 		tmpFileName: "",
+		progress: 0,
 
 		originPic: { // 原始图片宽高
 			w: 1,
@@ -99,8 +114,8 @@ new Vue({
 		previewPartPic: { // 部分preview图片的信息
 			w: 1,
 			h: 1,
-			marginLeft: -1000,
-			marginTop: -500
+			marginLeft: 0,
+			marginTop: 0
 		}
 
 	},
@@ -156,7 +171,7 @@ new Vue({
 		initFileUploader: function(){
 			$("#fileUploader").fileUploader({
 				url: "/upload",
-				debug: true,
+				debug: false,
 				clientCheck: true,
 				type: "image", 
 				allowType: ["jpg", "jpeg","png", "gif"],
@@ -164,10 +179,20 @@ new Vue({
 				previewId: "imgPreview",
 				frontCheckNgCallback: ((code) => {
 					if(code == "size"){
-						alert("不能超过20M");
+						alert("图片大小不能超过20M");
 					}
 					if(code == "type"){
-						alert("支持格式jpg,png,gif");
+						alert("请选择jpg,png,gif格式的图片");
+					}
+				}),
+				progressCallback: ((percentage) => {
+					var intPercentage = parseInt(percentage * 100,10);
+					if(intPercentage === 100){
+						setTimeout(() => {
+							this.progress = intPercentage;		
+						},200);
+					}else {
+						this.progress = intPercentage;
 					}
 				}),
 				doneCallback: ((tmpFileName) => {
@@ -197,7 +222,7 @@ new Vue({
 				data: {
 					tmpFileName: this.tmpFileName,
 					type: this.type,
-					selector: this.selector
+					selector: this.calcRealSelector(this.selector)
 				}
 			}, (doneFileName) => {
 				console.log("created file [%s]", doneFileName);
@@ -244,8 +269,19 @@ new Vue({
 				height: h + 'px'
 			};				
 
-			console.log(returnInfo);
 			return returnInfo;
+		},
+
+		calcRealSelector: function(selector){
+			var rateW = this.originPic.w / this.previewAllPic.w;
+			var rateH = this.originPic.h / this.previewAllPic.h;
+			var rate = Math.max(rateW, rateH);
+			return {
+				w: parseInt(selector.w * rate, 10),
+				h: parseInt(selector.h * rate, 10),
+				l: parseInt(selector.l * rate, 10),
+				t: parseInt(selector.t * rate, 10)
+			}
 		}
 	},
 

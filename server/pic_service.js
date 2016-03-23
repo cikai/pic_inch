@@ -165,42 +165,33 @@ function getCoorArr(type){
 	return coorArr;
 }
 
-function main(ctx, callback){
-	var tasks = [
-		function(){
-			return new Promise((resolve, reject) => {
-				resolve(ctx);
-			});	
-		},
+function* main(ctx){
+
+	var fns = [
 		prepareBaseImage,
 		crop,
 		convertImg,
 		composite,
-		function(ctx){
-			return new Promise((resolve, reject) => {
-				resolve(ctx);
-				callback(null, path.basename(ctx.tmpDonePath));
-			});	
-		},
-	];
+		]
 
-	tasks = tasks.map((fn) => {
+	fns = fns.map((fn) => {
 		return useLog(fn, true);
 	})
 
-	var chain = null;
-	for(let fn of tasks){
-		if(!chain) {
-			chain = fn();
-		}else {
-			chain = chain.then(fn);
-		}
+	for(let fn of fns){
+		yield fn.call(this, ctx);
 	}
+
+	// yield prepareBaseImage(ctx);
+	// yield crop(ctx);
+	// yield convertImg(ctx);
+	// yield composite(ctx);
+	return path.basename(ctx.tmpDonePath);
 }
 
 
 
-module.exports = function(picInfo, callback){
+module.exports = function* (picInfo){
 	var imgBasePath = path.join(__dirname, "img_base");
 	var tmpFileName = picInfo.tmpFileName;
 	var fileBaseName = tmpFileName.substring(0, tmpFileName.indexOf("."));
@@ -222,5 +213,6 @@ module.exports = function(picInfo, callback){
 		bgPath: path.join(imgBasePath, "inch5.jpg")
 
 	}
-	main(ctx, callback);
+	let doneFilePath = yield main(ctx);
+	return doneFilePath;
 }

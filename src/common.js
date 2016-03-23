@@ -117,6 +117,12 @@ common.jsExtension = function() {
     Array.prototype.min = function() {
         return Math.min.apply(null, this);
     };
+
+    window.alert = function(msg){
+        var alertModal = $(".modal-alert");
+        alertModal.find(".modal-body").text(msg);
+        alertModal.modal("show");
+    }
 }
 
 module.exports = common;

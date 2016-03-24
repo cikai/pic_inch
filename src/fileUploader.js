@@ -33,6 +33,8 @@
  *  data: {
  *      contentId: 123
  *  }
+ *  uploadStartCallback: function(){
+ *  }
  *  frontCheckNgCallback: function(checkCode){
  *      // checkCode is ['size', 'type', 'widthHeight']
  *  },
@@ -121,6 +123,10 @@ FileUploader.prototype = {
         var baseDom = this.baseDom;
         var options = this.options;
         var containerDom = this.containerDom;
+
+        if(options.uploadStartCallback){
+            options.uploadStartCallback.call(this);
+        }
 
         // clear offscreen image
         containerDom.find(".offScreen").empty();
@@ -307,19 +313,24 @@ FileUploader.prototype = {
         if (previewId) {
             var reader = new FileReader();
             reader.onload = function(e) {
+
                 var srcUrl = reader.result;
                 var $preview = $("#" + previewId);
                 $preview.empty();
+                
+                var previewDeferred = null;
                 if (type === "image") {
-                    previewImage(previewId, srcUrl);
+                    previewDeferred = previewImage(previewId, srcUrl);
                 } else if (type === "video") {
                     previewVideo(previewId, srcUrl, fileType);
                 }
                 
-                var fnDoneCallback = options.doneCallback;
-                if (fnDoneCallback) {
-                    fnDoneCallback.call(baseDom, result);
-                }
+                previewDeferred.then(() => {
+                    var fnDoneCallback = options.doneCallback;
+                    if (fnDoneCallback) {
+                        fnDoneCallback.call(baseDom, result);
+                    }
+                });
             };
             reader.readAsDataURL(baseDom.get(0).files[0]);
         }
@@ -487,11 +498,15 @@ FileUploader.prototype = {
 };
 
 function previewImage(previewId, srcUrl) {
+    var deferred = new $.Deferred();
     var $preview = $("#" + previewId);
     $("<img></img>").attr("src", srcUrl).css({
         "max-width": "100%",
         "max-height": "100%"
-    }).addClass("verticalCenterDiv").appendTo($preview);
+    }).addClass("verticalCenterDiv").appendTo($preview).on("load", () => {
+        deferred.resolve();
+    });
+    return deferred;
 }
 
 /**

@@ -39,7 +39,7 @@ new Vue({
 						<div id="imgPreview" class="offScreen"></div>
 						<input type="hidden" id="tmpFileName" name="tmpFileName" />
 					</div>
-					<div class="progress">
+					<div class="progress" v-show="progress != 0">
 					  <div class="progress-bar" role="progressbar" aria-valuenow="{{progress}}" aria-valuemin="0" aria-valuemax="100" :style="{width: progress + '%'}">
 					    {{progress}}%
 					  </div>
@@ -177,6 +177,10 @@ new Vue({
 				allowType: ["jpg", "jpeg","png", "gif"],
 				maxSize: 1024 * 1024 * 20, // 20M
 				previewId: "imgPreview",
+				uploadStartCallback: (() => {
+					this.tmpFileName = "";
+					this.progress = 0;
+				}),
 				frontCheckNgCallback: ((code) => {
 					if(code == "size"){
 						alert("图片大小不能超过20M");

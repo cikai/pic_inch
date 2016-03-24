@@ -42,16 +42,16 @@ common.sendAjax = function() {
                 okCallback(data.result, data.code);
             }
         } else {
-            showErrorMsg("エラー発生しました。");
+            showErrorMsg("发生错误啦。");
         }
     };
-    params.error = function(xhr) {
+    params.error = function(xhr, status, e) {
         if (xhr.status == "911") {
-            showErrorMsg("セッションタイムアウトしました。", toLogout);
+            showErrorMsg("连接超时。", toLogout);
         } else if (xhr.status == "413" && xhr.getResponseHeader("fileupload") == "fileupload") {
             showErrorMsg(messages.values["error.filesize.exceeded"]);
         } else {
-            showErrorMsg("エラー発生しました。");
+            showErrorMsg("发生错误啦。" + e);
             if (ngCallback) {
                 ngCallback();
             }

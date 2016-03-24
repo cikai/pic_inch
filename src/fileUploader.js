@@ -324,7 +324,7 @@ FileUploader.prototype = {
                 } else if (type === "video") {
                     previewVideo(previewId, srcUrl, fileType);
                 }
-                
+
                 previewDeferred.then(() => {
                     var fnDoneCallback = options.doneCallback;
                     if (fnDoneCallback) {

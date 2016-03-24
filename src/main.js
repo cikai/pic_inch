@@ -35,11 +35,11 @@ new Vue({
 					<label for="fileUploader">照片选择</label>
 					<span class='help'>支持jpg, gif, png格式的图片</span>
 					<div class="upload">
-						<input type="file" id="fileUploader" name="selectFile"/>
+						<input type="file" id="fileUploader" name="selectFile" :disabled="progress != 0 && progress != 100"/>
 						<div id="imgPreview" class="offScreen"></div>
 						<input type="hidden" id="tmpFileName" name="tmpFileName" />
 					</div>
-					<div class="progress" v-show="progress != 0">
+					<div class="progress marginTop10" v-show="progress != 0">
 					  <div class="progress-bar" role="progressbar" aria-valuenow="{{progress}}" aria-valuemin="0" aria-valuemax="100" :style="{width: progress + '%'}">
 					    {{progress}}%
 					  </div>

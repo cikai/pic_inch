@@ -101,6 +101,6 @@
 
 * CDN
 
-	[百度云加速(免费CDN)](http://next.su.baidu.com/console/add-website/add-website-step3.html#ns/56f4c4555f3ec22c93204f0b/)  
+	-[百度云加速(免费CDN)](http://next.su.baidu.com/console/add-website/add-website-step3.html#ns/56f4c4555f3ec22c93204f0b/)  
 	dns9.hichina.com -> n3581.ns.yunjiasu.com  
-	dns10.hichina.com  -> n563.ns.yunjiasu.com  
+	dns10.hichina.com  -> n563.ns.yunjiasu.com-

@@ -72,21 +72,21 @@
 
 ### 运行环境
 
-	* nodejs 5.0+
-	* GraphicsMagick
-	* npm install webpack forever -g
+* nodejs 5.0+
+* GraphicsMagick
+* npm install webpack forever -g
 
 ### 启动
 
-	* 编译
-		npm run product
+* 编译
+	npm run product
 
-		阿里云主机无法执行成功，猜测是入门机器，内存cpu限制。
-		在windows上做成后scp到服务器吧
-		scp ./build/* root@115.28.19.15:/root/pic_inch/build/
-		
-	* 服务器启动
-		cd server & NODE_ENV=product forever start koa.js
+	阿里云主机无法执行成功，猜测是入门机器，内存cpu限制。
+	在windows上做成后scp到服务器吧
+	scp ./build/* root@115.28.19.15:/root/pic_inch/build/
+	
+* 服务器启动
+	cd server & NODE_ENV=product forever start koa.js
 
 ### 主机情报
 

@@ -34,7 +34,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-        title : 'Vue Test',
+        title : '证明照在线',
         template : 'index_template.html',
         inject : 'body', 
         filename : "index.html"

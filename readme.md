@@ -51,9 +51,9 @@
 
 * 调整图像的dpi
 	
-	图像的打印尺寸保持不变，增大dpi会增加图片的长和宽的像素  
-	增加的像素是根据算法算出的。  
-	在电脑屏幕上看的话，会因为图片变大了而导致模糊。
+	图像的打印尺寸保持不变，增大dpi会增加图片的长和宽的像素    
+	增加的像素是根据算法算出的。    
+	在电脑屏幕上看的话，会因为图片变大了而导致模糊。  
 
 	`gm convert a.jpg -resample 300x300 a_resample.jpg`
 
@@ -81,10 +81,10 @@
 * 编译
 	npm run product
 
-	阿里云主机无法执行成功，猜测是入门机器，内存cpu限制。
-	在windows上做成后scp到服务器吧
+	阿里云主机无法执行成功，猜测是入门机器，内存cpu限制。  
+	在windows上做成后scp到服务器吧  
 	scp ./build/* root@115.28.19.15:/root/pic_inch/build/
-	
+
 * 服务器启动
 	cd server & NODE_ENV=product forever start koa.js
 
@@ -92,7 +92,7 @@
 
 * 阿里云ECS服务器
 
-	115.28.19.15
+	115.28.19.15  
 	[主机管理](https://netcn.console.aliyun.com/core/domain/list?spm=5176.1814471.1002.1.8faFN7&source=netcn)
 
 * 阿里云域名
@@ -101,6 +101,6 @@
 
 * CDN
 
-	[百度云加速(免费CDN)](http://next.su.baidu.com/console/add-website/add-website-step3.html#ns/56f4c4555f3ec22c93204f0b/)
-	dns9.hichina.com -> n3581.ns.yunjiasu.com
-	dns10.hichina.com  -> n563.ns.yunjiasu.com
+	[百度云加速(免费CDN)](http://next.su.baidu.com/console/add-website/add-website-step3.html#ns/56f4c4555f3ec22c93204f0b/)  
+	dns9.hichina.com -> n3581.ns.yunjiasu.com  
+	dns10.hichina.com  -> n563.ns.yunjiasu.com  

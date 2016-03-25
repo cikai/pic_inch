@@ -76,8 +76,9 @@ new Vue({
 				</div>
 				<div class="form-group">
 					<button type="button" 
+						data-loading-text="做成中..."
 						class='btn btn-primary' 
-						@click.prevent='createClickHandler'
+						@click.prevent='createClickHandler($event)'
 						:disabled="tmpFileName == ''">
 						生成相片（可打印/冲印）
 					</button>
@@ -219,7 +220,10 @@ new Vue({
 			});
 		},
 
-		createClickHandler: function(){
+		createClickHandler: function(e){
+			var $btn = $(e.target);
+			$btn.button("loading");
+
 			common.sendAjax({
 				url: '/create',
 				method: 'POST',
@@ -231,6 +235,7 @@ new Vue({
 			}, (doneFileName) => {
 				console.log("created file [%s]", doneFileName);
 				window.location.href='/download?filename=' + doneFileName;
+				$btn.button("reset");
 			});
 		},
 

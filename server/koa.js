@@ -30,6 +30,9 @@ app.use(function* (next){
 		return yield next;
 	}
 
+	// create base folder for image
+	yield createBaseFolder();
+
 	// multipart upload
 	var parts = mparse(this);
 	var part;
@@ -90,6 +93,14 @@ function getRandomName(){
 	var t = new Date().getTime();
 	var r = parseInt(Math.random() * 1000, 10);
 	return t + "_" + r;
+}
+
+function createBaseFolder(){
+	return new Promise((r) => {
+		fs.mkdir(fileUploadPath, () => {
+			r();
+		})
+	})
 }
 
 var port = 3000;
